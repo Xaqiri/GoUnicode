@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"strings"
 )
 
 func boxDrawing() {
@@ -100,9 +102,55 @@ func asciiDrawing() {
 
 }
 
+func helpDrawing() {
+	fmt.Printf("%c", 0x250c)
+	fmt.Printf("%s", "Help")
+	for i := 0; i < 62; i++ {
+		fmt.Printf("%c", 0x2500)
+	}
+	fmt.Printf("%c\n", 0x2510)
+	fmt.Printf("%c --help: Displays this help table%s%c\n", 0x2502, strings.Repeat(" ", 33), 0x2502)
+	fmt.Printf("%c --block: Displays the unicode table for block drawing characters %c\n", 0x2502, 0x2502)
+	fmt.Printf("%c --box: Displays the unicode table for box drawing characters%s%c\n", 0x2502, strings.Repeat(" ", 5), 0x2502)
+	fmt.Printf("%c --ascii: Displays the unicode table for ascii characters%s%c\n", 0x2502, strings.Repeat(" ", 9), 0x2502)
+
+	fmt.Printf("%c", 0x2514)
+	for i := 0; i < 66; i++ {
+		fmt.Printf("%c", 0x2500)
+	}
+	fmt.Printf("%c\n", 0x2518)
+
+}
+
 func main() {
-	boxDrawing()
-	blockDrawing()
-	shapeDrawing()
-	asciiDrawing()
+	// Add command line flags to show specific tables
+	// help := flag.Bool("help", false, "displays help")
+	box := flag.Bool("box", false, "displays box drawing characters")
+	block := flag.Bool("block", false, "displays block drawing characters")
+	shape := flag.Bool("shape", false, "displays shape drawing characters")
+	ascii := flag.Bool("ascii", false, "displays ascii characters")
+	all := flag.Bool("all", false, "displays all tables")
+
+	flag.Parse()
+	// if *help {
+	// helpDrawing()
+	// } else {
+	if *box {
+		boxDrawing()
+	}
+	if *block {
+		blockDrawing()
+	}
+	if *shape {
+		shapeDrawing()
+	}
+	if *ascii {
+		asciiDrawing()
+	}
+	if *all || !(*box || *block || *shape || *ascii) {
+		boxDrawing()
+		blockDrawing()
+		shapeDrawing()
+		asciiDrawing()
+	}
 }
