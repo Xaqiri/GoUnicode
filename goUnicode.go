@@ -3,132 +3,67 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
 )
 
-func boxDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "Box Drawing")
-	for i := 0; i < 118; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2510)
-	for y := 0x2500; y < 0x2570; y += 0x0010 {
-		fmt.Printf("%c ", 0x2502)
+type Color int
 
-		for x := 0x00; x < 0x10; x++ {
-			fmt.Printf("%x: \u001b[38;5;6m%c \u001b[0m", y+x, y+x)
-		}
-		fmt.Printf("%c\n", 0x2502)
-	}
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 129; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
+const (
+	Cyan  Color = 6
+	White Color = 7
+)
+
+const (
+	tlCorner = 0x250c
+	trCorner = 0x2510
+	blCorner = 0x2514
+	brCorner = 0x2518
+	hLine    = 0x2500
+	vLine    = 0x2502
+)
+
+type CharSet struct {
+	title      string
+	start, end int
 }
 
-func blockDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "Block Drawing")
-	for i := 0; i < 116; i++ {
-		fmt.Printf("%c", 0x2500)
+func writeChar(color Color, char int) {
+	if (char >> 8) == 0 {
+		fmt.Printf("00%x:\u001b[38;5;%dm %c \u001b[0m", char, color, char)
+	} else {
+		fmt.Printf("%x:\u001b[38;5;%dm %c \u001b[0m", char, color, char)
 	}
-	fmt.Printf("%c\n", 0x2510)
-	for y := 0x2580; y <= 0x2590; y += 0x0010 {
-		fmt.Printf("%c ", 0x2502)
-
-		for x := 0x00; x < 0x10; x++ {
-			fmt.Printf("%x: \u001b[38;5;6m%c \u001b[0m", y+x, y+x)
-		}
-		fmt.Printf("%c\n", 0x2502)
-	}
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 129; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
 }
 
-func shapeDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "Shape Drawing")
-	for i := 0; i < 116; i++ {
-		fmt.Printf("%c", 0x2500)
+func (c CharSet) draw() {
+	width := 129
+	fmt.Printf("%c", tlCorner)
+	fmt.Printf("%s", c.title)
+	for i := 0; i < (width - len(c.title)); i++ {
+		fmt.Printf("%c", hLine)
 	}
-	fmt.Printf("%c\n", 0x2510)
-	for y := 0x25A0; y <= 0x25F0; y += 0x0010 {
-		fmt.Printf("%c ", 0x2502)
-		for x := 0x00; x < 0x10; x++ {
-			if y+x == 0x25fd || y+x == 0x25fe {
-				fmt.Printf("%x:\u001b[38;5;6m%c \u001b[0m", y+x, y+x)
+	fmt.Printf("%c\n", trCorner)
 
-			} else {
-				fmt.Printf("%x: \u001b[38;5;6m%c \u001b[0m", y+x, y+x)
-			}
-		}
-		fmt.Printf("%c\n", 0x2502)
-	}
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 129; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
-}
+	for y := c.start; y <= c.end; y += 0x0010 {
+		fmt.Printf("%c ", vLine)
 
-func brailleDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "Braille")
-	for i := 0; i < 116; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2510)
-	for y := 0x2800; y <= 0x28F0; y += 0x0010 {
-		fmt.Printf("%c ", 0x2502)
-		for x := 0x00; x < 0x10; x++ {
-			// if y+x == 0x28fd || y+x == 0x28fe {
-			// 	fmt.Printf("%x:\u001b[38;5;6m%c \u001b[0m", y+x, y+x)
-
-			// } else {
-				fmt.Printf("%x: \u001b[38;5;6m%c \u001b[0m", y+x, y+x)
-			// }
-		}
-		fmt.Printf("%c\n", 0x2502)
-	}
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 129; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
-}
-
-func asciiDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "ASCII")
-	for i := 0; i < 124; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2510)
-	for y := 0x0020; y < 0x0080; y += 0x0010 {
-		fmt.Printf("%c ", 0x2502)
 		for x := 0x00; x < 0x10; x++ {
 			switch y + x {
 			case 0x007f:
 				fmt.Printf("00%x: \u001b[38;5;6m%c \u001b[0m", y+x, 0x2421)
-			case 0x0080:
-				fmt.Printf("%s\u001b[38;5;6m%c \u001b[0m", "      ", 0x0020)
+			case 0x25fd, 0x25fe:
+				fmt.Printf("%x:\u001b[38;5;6m%c \u001b[0m", y+x, y+x)
 			default:
-				fmt.Printf("00%x: \u001b[38;5;6m%c \u001b[0m", y+x, y+x)
+				writeChar(Cyan, y+x)
 			}
 		}
-		fmt.Printf("%c\n", 0x2502)
+		fmt.Printf("%c\n", vLine)
 	}
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 129; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
 
+	fmt.Printf("%c", blCorner)
+	for i := 0; i < width; i++ {
+		fmt.Printf("%c", hLine)
+	}
+	fmt.Printf("%c\n", brCorner)
 }
 
 func ctrlCodes() {
@@ -175,68 +110,49 @@ func ctrlCodes() {
 		fmt.Printf("%c", 0x2500)
 	}
 	fmt.Printf("%c\n", 0x2518)
-
-}
-
-func helpDrawing() {
-	fmt.Printf("%c", 0x250c)
-	fmt.Printf("%s", "Help")
-	for i := 0; i < 62; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2510)
-	fmt.Printf("%c --help: Displays this help table%s%c\n", 0x2502, strings.Repeat(" ", 33), 0x2502)
-	fmt.Printf("%c --block: Displays the unicode table for block drawing characters %c\n", 0x2502, 0x2502)
-	fmt.Printf("%c --box: Displays the unicode table for box drawing characters%s%c\n", 0x2502, strings.Repeat(" ", 5), 0x2502)
-	fmt.Printf("%c --ascii: Displays the unicode table for ascii characters%s%c\n", 0x2502, strings.Repeat(" ", 9), 0x2502)
-
-	fmt.Printf("%c", 0x2514)
-	for i := 0; i < 66; i++ {
-		fmt.Printf("%c", 0x2500)
-	}
-	fmt.Printf("%c\n", 0x2518)
-
 }
 
 func main() {
+	box := CharSet{"Box Drawing", 0x2500, 0x257F}
+	block := CharSet{"Block Drawing", 0x2580, 0x259F}
+	shape := CharSet{"Shape Drawing", 0x25A0, 0x25FF}
+	braille := CharSet{"Braille", 0x2800, 0x28ff}
+	ascii := CharSet{"ASCII", 0x0020, 0x007F}
+	charSets := []CharSet{box, block, shape, braille, ascii}
+
 	// Add command line flags to show specific tables
-	// help := flag.Bool("help", false, "displays help")
-	box := flag.Bool("box", false, "displays box drawing characters")
-	block := flag.Bool("block", false, "displays block drawing characters")
-	shape := flag.Bool("shape", false, "displays shape drawing characters")
-	braille := flag.Bool("braille", false, "displays braille characters")
-	ascii := flag.Bool("ascii", false, "displays ascii characters")
-	ctrl := flag.Bool("ctrl", false, "displays control codes")
-	all := flag.Bool("all", false, "displays all tables")
+	boxFlag := flag.Bool("box", false, "displays box drawing characters")
+	blockFlag := flag.Bool("block", false, "displays block drawing characters")
+	shapeFlag := flag.Bool("shape", false, "displays shape drawing characters")
+	brailleFlag := flag.Bool("braille", false, "displays braille characters")
+	asciiFlag := flag.Bool("ascii", false, "displays ascii characters")
+	ctrlFlag := flag.Bool("ctrl", false, "displays control codes")
+	allFlag := flag.Bool("all", false, "displays all tables")
 
 	flag.Parse()
-	// if *help {
-	// helpDrawing()
-	// } else {
-	if *box {
-		boxDrawing()
+
+	if *boxFlag {
+		box.draw()
 	}
-	if *block {
-		blockDrawing()
+	if *blockFlag {
+		block.draw()
 	}
-	if *shape {
-		shapeDrawing()
+	if *shapeFlag {
+		shape.draw()
 	}
-	if *braille {
-		brailleDrawing()
+	if *brailleFlag {
+		braille.draw()
 	}
-	if *ascii {
-		asciiDrawing()
+	if *asciiFlag {
+		ascii.draw()
 	}
-	if *ctrl {
+	if *ctrlFlag {
 		ctrlCodes()
 	}
-	if *all || !(*box || *block || *shape || *braille || *ascii || *ctrl) {
-		boxDrawing()
-		blockDrawing()
-		shapeDrawing()
-		brailleDrawing()
-		asciiDrawing()
+	if *allFlag || !(*boxFlag || *blockFlag || *shapeFlag || *brailleFlag || *asciiFlag || *ctrlFlag) {
+		for _, i := range charSets {
+			i.draw()
+		}
 		ctrlCodes()
 	}
 }
